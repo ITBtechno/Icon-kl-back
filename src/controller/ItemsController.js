@@ -13,7 +13,10 @@ const getAllItems = async (req, res) => {
 const getItemById = async (req, res) => {
   try {
     const { id } = req.params;
-    const item = await ItemsModel.findById(id);
+    const item = await ItemsModel.findById(id).populate({
+      path: "categoryId",
+      select: "name",
+    });
     if (!item) {
       return res.status(404).json("Item is not found!");
     }
