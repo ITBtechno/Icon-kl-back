@@ -31,14 +31,14 @@ const createItem = async (req, res) => {
   try {
     const { name, price, categoryId, ingredients } = req.body;
     const imageFile = req.file ? req.file.path : null;
-    
+
     const newItemData = {
       name,
       price,
       categoryId,
       ingredients,
     };
-    
+
     if (imageFile) {
       newItemData.image = imageFile;
     }
@@ -70,7 +70,8 @@ const updateItem = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, price, categoryId, ingredients, image } = req.body;
-    const imageFile = req.file.path;
+    const imageFile = req.file ? req.file.path : null;
+
     const existingItem = await ItemsModel.findById(id);
     if (!existingItem) {
       return res.status(404).json({ error: "Item not found" });
@@ -79,13 +80,17 @@ const updateItem = async (req, res) => {
     const updatedItemData = {
       name,
       price,
-      categoryId,
       ingredients,
-      image,
     };
 
-    if (image) {
+    if (categoryId !== undefined) {
+      updatedItemData.categoryId = categoryId;
+    }
+
+    if (imageFile) {
       updatedItemData.image = imageFile;
+    } else if (image !== undefined) {
+      updatedItemData.image = image;
     }
 
     const updatedItem = await ItemsModel.findByIdAndUpdate(
@@ -94,18 +99,21 @@ const updateItem = async (req, res) => {
       { new: true }
     );
 
-    if (existingItem.categoryId.toString() !== categoryId) {
-      await CategoriesModel.findByIdAndUpdate(existingItem.categoryId, {
-        $pull: { items: existingItem._id },
-      });
+    if (categoryId !== undefined) {
+      if (existingItem.categoryId.toString() !== categoryId) {
+        await CategoriesModel.findByIdAndUpdate(existingItem.categoryId, {
+          $pull: { items: existingItem._id },
+        });
+      }
+
       await CategoriesModel.findByIdAndUpdate(categoryId, {
-        $push: { items: updatedItem._id },
+        $addToSet: { items: updatedItem._id },
       });
     }
 
     res.json(updatedItem);
   } catch (error) {
-    console.error(error);
+    console.error("Error during update:", error);
     res
       .status(500)
       .json({ error: "Item is not updated due to an internal server error" });
