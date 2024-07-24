@@ -30,15 +30,17 @@ const getItemById = async (req, res) => {
 const createItem = async (req, res) => {
   try {
     const { name, price, categoryId, ingredients } = req.body;
-    const image = req.file.path;
+    const imageFile = req.file ? req.file.path : null;
+    
     const newItemData = {
       name,
       price,
       categoryId,
       ingredients,
     };
-    if (image) {
-      newItemData.image = image;
+    
+    if (imageFile) {
+      newItemData.image = imageFile;
     }
 
     const newItem = new ItemsModel(newItemData);
@@ -67,8 +69,8 @@ const createItem = async (req, res) => {
 const updateItem = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, price, categoryId, ingredients } = req.body;
-    const image = req.file ? req.file.path : undefined;
+    const { name, price, categoryId, ingredients, image } = req.body;
+    const imageFile = req.file.path;
     const existingItem = await ItemsModel.findById(id);
     if (!existingItem) {
       return res.status(404).json({ error: "Item not found" });
@@ -79,10 +81,11 @@ const updateItem = async (req, res) => {
       price,
       categoryId,
       ingredients,
+      image,
     };
 
     if (image) {
-      updatedItemData.image = image;
+      updatedItemData.image = imageFile;
     }
 
     const updatedItem = await ItemsModel.findByIdAndUpdate(
