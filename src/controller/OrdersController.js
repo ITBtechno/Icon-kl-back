@@ -112,10 +112,38 @@ const deleteOrder = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+const updateOrder = async (req, res) => {
+  const { id } = req.params;
+  const updates = req.body;
+
+  try {
+    const updatedOrder = await OrdersModel.findByIdAndUpdate(id, updates, {
+      new: true, 
+      runValidators: true, 
+    })
+      .populate({
+        path: "orderByUserId",
+        select: "fullname role gender email",
+      })
+      .populate({
+        path: "items.itemId",
+        select: "name price",
+      });
+
+    if (!updatedOrder) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    res.status(200).json(updatedOrder);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 module.exports = {
   createOrder,
   deleteOrder,
   getAllOrders,
   getOrderById,
+  updateOrder,
 };
