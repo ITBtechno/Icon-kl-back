@@ -25,7 +25,7 @@ const ordersSchema = new Schema(
   {
     timestamps: {
       createdAt: true,
-      updatedAt: false,
+      updatedAt: true,
     },
   }
 );
