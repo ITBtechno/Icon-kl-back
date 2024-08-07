@@ -4,7 +4,7 @@ const { Schema } = mongoose;
 const ordersSchema = new Schema(
   {
     amount: { type: Number, required: true },
-    status: { type: String, required: true, default: "pending" },
+    status: { type: String, required: true, default: "Pending" },
     promocode: {
       code: { type: String, required: true },
       discount: { type: Number, required: true },
