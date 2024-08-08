@@ -5,12 +5,7 @@ const ordersSchema = new Schema(
   {
     amount: { type: Number, required: true },
     status: { type: String, required: true, default: "Pending" },
-    promocode: {
-      code: { type: String, required: true },
-      discount: { type: Number, required: true },
-      expirationDate: { type: Date, required: true },
-      limit: { type: Number, default: 0, ref: "users" },
-    },
+    promocodeId: { type: Schema.Types.ObjectId, ref: "promocodes" },
     paymentMethod: { type: String, required: true },
     items: [
       {

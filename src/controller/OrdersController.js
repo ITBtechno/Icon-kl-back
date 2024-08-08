@@ -1,5 +1,6 @@
 const ItemsModel = require("../model/ItemsModel.js");
 const OrdersModel = require("../model/OrderModel.js");
+const PromocodesModel = require("../model/PromocodeModel.js");
 const UsersModel = require("../model/UserModel.js");
 
 const getAllOrders = async (req, res) => {
@@ -22,7 +23,12 @@ const getAllOrders = async (req, res) => {
       .populate({
         path: "items.itemId",
         select: "name price",
+      })
+      .populate({
+        path: "promocodeId", 
+        select: "code discount expirationDate expired",
       });
+
     res.status(200).json(orders);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -50,10 +56,16 @@ const getOrderById = async (req, res) => {
       .populate({
         path: "items.itemId",
         select: "name price",
+      })
+      .populate({
+        path: "promocodeId",
+        select: "code discount expirationDate expired",
       });
+
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
     }
+
     res.status(200).json(order);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -61,7 +73,7 @@ const getOrderById = async (req, res) => {
 };
 
 const createOrder = async (req, res) => {
-  const { amount, items, orderByUserId, promocode, paymentMethod } = req.body;
+  const { amount, items, orderByUserId, promocodeId, paymentMethod } = req.body;
 
   try {
     const user = await UsersModel.findById(orderByUserId);
@@ -78,11 +90,16 @@ const createOrder = async (req, res) => {
       }
     }
 
+    const promocode = await PromocodesModel.findById(promocodeId);
+    if (promocodeId && !promocode) {
+      return res.status(404).json({ message: "Promocode not found" });
+    }
+
     const newOrder = new OrdersModel({
       amount,
       items,
       orderByUserId,
-      promocode,
+      promocodeId,
       paymentMethod,
     });
 
@@ -112,14 +129,15 @@ const deleteOrder = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 const updateOrder = async (req, res) => {
   const { id } = req.params;
   const updates = req.body;
 
   try {
     const updatedOrder = await OrdersModel.findByIdAndUpdate(id, updates, {
-      new: true, 
-      runValidators: true, 
+      new: true,
+      runValidators: true,
     })
       .populate({
         path: "orderByUserId",
@@ -128,6 +146,10 @@ const updateOrder = async (req, res) => {
       .populate({
         path: "items.itemId",
         select: "name price",
+      })
+      .populate({
+        path: "promocodeId",
+        select: "code discount expirationDate expired",
       });
 
     if (!updatedOrder) {
