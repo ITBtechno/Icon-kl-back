@@ -41,14 +41,33 @@ const getPromocodeById = async (req, res) => {
 const updatePromocode = async (req, res) => {
   try {
     const { code, discount, expirationDate, limit } = req.body;
-    const updatedPromocode = await PromocodesModel.findByIdAndUpdate(
-      req.params.id,
-      { code, discount, expirationDate, limit },
-      { new: true, runValidators: true }
-    );
-    if (!updatedPromocode) {
+
+    const promocode = await PromocodesModel.findById(req.params.id);
+
+    if (!promocode) {
       return res.status(404).json({ message: "Promocode not found" });
     }
+
+    if (code) promocode.code = code;
+    if (discount) promocode.discount = discount;
+    if (expirationDate) promocode.expirationDate = expirationDate;
+    if (limit !== undefined) promocode.limit = limit;
+
+    if (promocode.expirationDate && new Date() > promocode.expirationDate) {
+      promocode.expired = true;
+    } else {
+      const usageCount = await OrdersModel.countDocuments({
+        promocodeId: promocode._id,
+      });
+
+      if (promocode.limit > 0 && usageCount >= promocode.limit) {
+        promocode.expired = true;
+      } else {
+        promocode.expired = false;
+      }
+    }
+
+    const updatedPromocode = await promocode.save();
     res.status(200).json(updatedPromocode);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -78,7 +97,9 @@ const validatePromocode = async (req, res) => {
       return res.status(404).json({ message: "Promocode not found" });
     }
 
-    if (promocode.expired) {
+    if (promocode.expirationDate && new Date() > promocode.expirationDate) {
+      promocode.expired = true;
+      await promocode.save();
       return res.status(400).json({ message: "Promocode is expired" });
     }
 
@@ -87,15 +108,19 @@ const validatePromocode = async (req, res) => {
     });
 
     if (promocode.limit > 0 && usageCount >= promocode.limit) {
+      promocode.expired = true;
+      await promocode.save();
       return res
         .status(400)
         .json({ message: "Promocode usage limit has been reached" });
     }
+
     res.status(200).json({ message: "Promocode is valid", promocode });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
 module.exports = {
   createPromocode,
   getAllPromocodes,

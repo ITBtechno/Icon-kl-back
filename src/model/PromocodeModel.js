@@ -17,10 +17,19 @@ const promocodesSchema = new Schema(
   }
 );
 
-promocodesSchema.pre("save", function (next) {
-  if (this.expirationDate) {
-    this.expired = new Date() > this.expirationDate;
+promocodesSchema.pre("save", async function (next) {
+  const usageCount = await mongoose.model("orders").countDocuments({
+    promocodeId: this._id,
+  });
+
+  if (this.expirationDate && new Date() > this.expirationDate) {
+    this.expired = true;
+  } else if (this.limit > 0 && usageCount >= this.limit) {
+    this.expired = true;
+  } else {
+    this.expired = false;
   }
+
   next();
 });
 

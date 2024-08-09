@@ -95,6 +95,10 @@ const createOrder = async (req, res) => {
       return res.status(404).json({ message: "Promocode not found" });
     }
 
+    if (promocode && promocode.expired) {
+      return res.status(400).json({ message: "Promocode is expired" });
+    }
+
     const newOrder = new OrdersModel({
       amount,
       items,
@@ -113,6 +117,7 @@ const createOrder = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 const deleteOrder = async (req, res) => {
   const { id } = req.params;
