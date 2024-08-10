@@ -7,7 +7,7 @@ const promocodesSchema = new Schema(
     discount: { type: Number, required: true },
     expirationDate: { type: Date, required: true },
     expired: { type: Boolean, default: false },
-    limit: { type: Number, default: 0 },
+    limit: { type: Number, default: 100 },
   },
   {
     timestamps: {
